@@ -41,6 +41,7 @@ After connecting, run the following commands to set the hostname to **"terraform
 ```bash
 sudo hostnamectl set-hostname terraform
 bash
+```
 ## Step 6: Install Terraform on the Instance
 
 This section details the steps to install Terraform on your designated Terraform workstation instance.

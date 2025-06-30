@@ -1,5 +1,4 @@
-# Kubernetes_Capstone_Project
-Automated Cloud Infrastructure Deployment with IaC and Container Orchestration. Building and managing multi-tier applications using Terraform, Ansible, Docker, and Kubernetes.
+# Automated Cloud Infrastructure Deployment with IaC and Container Orchestration. Building and managing multi-tier applications using Terraform, Ansible, Docker, and Kubernetes.
 The statement "Automated Cloud Infrastructure Deployment with IaC and Container Orchestration. Building and managing multi-tier applications using Terraform, Ansible, Docker, and Kubernetes" describes a modern, highly efficient, and scalable approach to developing and operating software in cloud environments. Let's break down each key concept:
 
 **1. Automated Cloud Infrastructure Deployment:**

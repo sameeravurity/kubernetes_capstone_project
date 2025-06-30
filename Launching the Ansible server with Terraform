@@ -4,7 +4,7 @@ Run this command on your Terraform workstation instance to generate an SSH key p
 
 ```bash
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/terraform-key -N ""
-```
+
 This command will create two files in your ~/.ssh/ directory:
 
 ~/.ssh/terraform-key (private key)
@@ -14,7 +14,7 @@ Step 2: Create a variables.tf File
 Create a file named variables.tf and add the following Terraform variables. These variables define configurable parameters for your infrastructure.
 ```bash
 vi variables.tf
-```
+
 Add the following content to the variables.tf file:
 ```bash
 variable "region" {

@@ -1,0 +1,257 @@
+### Step 1: Generate a Keypair using `ssh-keygen`
+
+Run this command on your Terraform workstation instance to generate an SSH key pair. This key will be used to securely access the Ansible server.
+
+```bash
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/terraform-key -N ""
+```
+This command will create two files in your ~/.ssh/ directory:
+
+~/.ssh/terraform-key (private key)
+
+~/.ssh/terraform-key.pub (public key)
+Step 2: Create a variables.tf File
+Create a file named variables.tf and add the following Terraform variables. These variables define configurable parameters for your infrastructure.
+```bash
+vi variables.tf
+```
+Add the following content to the variables.tf file:
+```bash
+variable "region" {
+  default = "ap-south-1"
+}
+
+variable "instance_type" {
+  default = "t2.micro"
+}
+
+variable "key_name" {
+  default = "terraform-key"
+}
+
+variable "public_key_path" {
+  default = "~/.ssh/terraform-key.pub"
+}
+
+variable "ami_id" {
+  default = "ami-0f918f7e67a3323f0" # Note: This AMI ID is for Ubuntu 22.04 LTS in ap-south-1, verify it's the latest/correct one.
+}
+```
+Step 3: Create a main.tf File
+Create your main Terraform configuration file named main.tf. This file will define the AWS provider, key pair, security group, and the EC2 instance itself.
+```bash
+vi main.tf
+```
+Add the following Terraform configuration to the main.tf file:
+```bash
+provider "aws" {
+  region = var.region
+}
+
+# Resource to manage the public key generated locally
+# Note: The 'tls_private_key' resource is not strictly necessary for importing an existing public key.
+# It's typically used to generate a *new* key pair within Terraform.
+# However, if you're managing the local key generation outside of Terraform,
+# 'public_key = file(var.public_key_path)' in aws_key_pair is sufficient.
+# For simplicity and to directly use the locally generated key, we are relying on 'file(var.public_key_path)'.
+resource "tls_private_key" "generated" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "deployer_key" {
+  key_name   = var.key_name
+  public_key = file(var.public_key_path) # Uses the public key generated in Step 1
+}
+
+resource "aws_security_group" "allow_ssh" {
+  name        = "allow_ssh"
+  description = "Allow SSH inbound traffic"
+
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # WARNING: 0.0.0.0/0 allows access from anywhere. Restrict this in production.
+  }
+  ingress {
+    description = "Allow HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # WARNING: 0.0.0.0/0 allows access from anywhere. Restrict this in production.
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1" # Allows all outbound traffic
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_instance" "ec2_instance" {
+  ami             = var.ami_id
+  instance_type   = var.instance_type
+  key_name        = aws_key_pair.deployer_key.key_name
+  security_groups = [aws_security_group.allow_ssh.name] # Associates the security group by name
+
+  tags = {
+    Name = "Ansible-EC2"
+  }
+}
+```
+Markdown
+
+### Step 1: Generate a Keypair using `ssh-keygen`
+
+Run this command on your Terraform workstation instance to generate an SSH key pair. This key will be used to securely access the Ansible server.
+
+```bash
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/terraform-key -N ""
+This command will create two files in your ~/.ssh/ directory:
+
+~/.ssh/terraform-key (private key)
+
+~/.ssh/terraform-key.pub (public key)
+
+Step 2: Create a variables.tf File
+Create a file named variables.tf and add the following Terraform variables. These variables define configurable parameters for your infrastructure.
+
+Bash
+
+vi variables.tf
+Add the following content to the variables.tf file:
+
+Terraform
+
+variable "region" {
+  default = "ap-south-1"
+}
+
+variable "instance_type" {
+  default = "t2.micro"
+}
+
+variable "key_name" {
+  default = "terraform-key"
+}
+
+variable "public_key_path" {
+  default = "~/.ssh/terraform-key.pub"
+}
+
+variable "ami_id" {
+  default = "ami-0f918f7e67a3323f0" # Note: This AMI ID is for Ubuntu 22.04 LTS in ap-south-1, verify it's the latest/correct one.
+}
+Step 3: Create a main.tf File
+Create your main Terraform configuration file named main.tf. This file will define the AWS provider, key pair, security group, and the EC2 instance itself.
+
+Bash
+
+vi main.tf
+Add the following Terraform configuration to the main.tf file:
+
+Terraform
+
+provider "aws" {
+  region = var.region
+}
+
+# Resource to manage the public key generated locally
+# Note: The 'tls_private_key' resource is not strictly necessary for importing an existing public key.
+# It's typically used to generate a *new* key pair within Terraform.
+# However, if you're managing the local key generation outside of Terraform,
+# 'public_key = file(var.public_key_path)' in aws_key_pair is sufficient.
+# For simplicity and to directly use the locally generated key, we are relying on 'file(var.public_key_path)'.
+resource "tls_private_key" "generated" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "deployer_key" {
+  key_name   = var.key_name
+  public_key = file(var.public_key_path) # Uses the public key generated in Step 1
+}
+
+resource "aws_security_group" "allow_ssh" {
+  name        = "allow_ssh"
+  description = "Allow SSH inbound traffic"
+
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # WARNING: 0.0.0.0/0 allows access from anywhere. Restrict this in production.
+  }
+  ingress {
+    description = "Allow HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # WARNING: 0.0.0.0/0 allows access from anywhere. Restrict this in production.
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1" # Allows all outbound traffic
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_instance" "ec2_instance" {
+  ami             = var.ami_id
+  instance_type   = var.instance_type
+  key_name        = aws_key_pair.deployer_key.key_name
+  security_groups = [aws_security_group.allow_ssh.name] # Associates the security group by name
+
+  tags = {
+    Name = "Ansible-EC2"
+  }
+}
+Step 4: Create an outputs.tf File
+Create an outputs.tf file to display useful information, such as the public IP address of the launched instance and a ready-to-use SSH command.
+```bash
+vi outputs.tf
+```
+Add the following content to the outputs.tf file:
+```bash
+output "instance_public_ip" {
+  description = "The public IP address of the Ansible EC2 instance."
+  value       = aws_instance.ec2_instance.public_ip
+}
+
+output "ssh_command" {
+  description = "SSH command to connect to the Ansible EC2 instance."
+  value       = "ssh -i ~/.ssh/terraform-key ubuntu@${aws_instance.ec2_instance.public_ip}"
+}
+```
+Step 5: Run the Terraform Commands
+Execute the following Terraform commands in sequence within the directory containing your .tf files.
+
+Initialize Terraform: Downloads necessary providers and modules.
+```bash
+terraform init
+```
+Validate Configuration: Checks for syntax errors and configuration issues.
+```bash
+terraform validate
+```
+Plan Changes: Shows you what actions Terraform will take (create, modify, destroy) without actually performing them.
+```bash
+terraform plan
+```
+Apply Changes: Executes the planned actions to provision the resources in AWS. You will be prompted to confirm.
+```bash
+terraform apply
+```
+Step 6: SSH into the Instance
+After Terraform successfully applies the changes, it will output the instance_public_ip and ssh_command. Use the provided SSH command to connect to your newly launched Ansible workstation.
+
+Example (replace 35.154.119.39 with the actual IP output by terraform apply):
+```bash
+ssh -i ~/.ssh/terraform-key ubuntu@35.154.119.39
+```
